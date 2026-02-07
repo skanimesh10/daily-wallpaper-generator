@@ -1,40 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Download, Calendar, ExternalLink } from "lucide-react"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Download, Calendar, ExternalLink } from "lucide-react";
 
 export default function YearCalendarWallpaper() {
-  const [deviceWidth, setDeviceWidth] = useState(1179)
-  const [deviceHeight, setDeviceHeight] = useState(2556)
+  const [deviceWidth, setDeviceWidth] = useState(1179);
+  const [deviceHeight, setDeviceHeight] = useState(2556);
+  const [mounted, setMounted] = useState(false);
 
-  const wallpaperUrl = `/days?width=${deviceWidth}&height=${deviceHeight}`
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const wallpaperUrl = `/days?width=${deviceWidth}&height=${deviceHeight}`;
 
   const downloadWallpaper = async () => {
-    const response = await fetch(wallpaperUrl)
-    const blob = await response.blob()
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.download = `2026-calendar-${new Date().toISOString().split("T")[0]}.png`
-    link.href = url
-    link.click()
-    URL.revokeObjectURL(url)
-  }
+    const response = await fetch(wallpaperUrl);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = `2026-calendar-${new Date().toISOString().split("T")[0]}.png`;
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Calculate days passed in 2026
-  const now = new Date()
-  const startOf2026 = new Date(2026, 0, 1)
-  const endOf2026 = new Date(2026, 11, 31)
-  let daysPassed = 0
+  const now = new Date();
+  const startOf2026 = new Date(2026, 0, 1);
+  const endOf2026 = new Date(2026, 11, 31);
+  let daysPassed = 0;
   if (now >= startOf2026 && now <= endOf2026) {
     daysPassed =
       Math.floor(
-        (now.getTime() - startOf2026.getTime()) / (1000 * 60 * 60 * 24)
-      ) + 1
+        (now.getTime() - startOf2026.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
   } else if (now > endOf2026) {
-    daysPassed = 365
+    daysPassed = 365;
   }
 
   return (
@@ -126,8 +131,8 @@ export default function YearCalendarWallpaper() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setDeviceWidth(preset.w)
-                      setDeviceHeight(preset.h)
+                      setDeviceWidth(preset.w);
+                      setDeviceHeight(preset.h);
                     }}
                     className={`text-xs border-neutral-700 hover:bg-neutral-800 hover:text-teal-400 ${
                       deviceWidth === preset.w && deviceHeight === preset.h
@@ -148,7 +153,7 @@ export default function YearCalendarWallpaper() {
               </Label>
               <div className="flex gap-2">
                 <code className="flex-1 bg-neutral-800 px-4 py-2 rounded-lg text-teal-400 text-sm overflow-x-auto">
-                  {typeof window !== "undefined"
+                  {mounted
                     ? `${window.location.origin}${wallpaperUrl}`
                     : wallpaperUrl}
                 </code>
@@ -209,5 +214,5 @@ export default function YearCalendarWallpaper() {
         </div>
       </div>
     </main>
-  )
+  );
 }

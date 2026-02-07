@@ -1,6 +1,6 @@
-import { ImageResponse } from "next/og"
+import { ImageResponse } from "next/og";
 
-export const runtime = "edge"
+export const runtime = "edge";
 
 // Tech & Science events for each day of the year (month-day format)
 const techScienceEvents: Record<string, string> = {
@@ -369,159 +369,170 @@ const techScienceEvents: Record<string, string> = {
   "12-29": "1989: Nikkei index reaches all-time high",
   "12-30": "1924: Edwin Hubble proves galaxies beyond Milky Way",
   "12-31": "1999: Y2K preparations finalized worldwide",
-}
-
+};
 function getTodayEvent(): string {
-  const now = new Date()
-  const month = now.getMonth() + 1
-  const day = now.getDate()
-  const key = `${month}-${day}`
-  return techScienceEvents[key] || "Technology shapes our world every day"
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const key = `${month}-${day}`;
+  return techScienceEvents[key] || "Technology shapes our world every day";
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
+  const { searchParams } = new URL(request.url);
 
-  const width = Number(searchParams.get("width")) || 1179
-  const height = Number(searchParams.get("height")) || 2556
+  const width = Number(searchParams.get("width")) || 1179;
+  const height = Number(searchParams.get("height")) || 2556;
 
   // Calculate days passed in 2026
-  const now = new Date()
-  const startOf2026 = new Date(2026, 0, 1)
-  const endOf2026 = new Date(2026, 11, 31)
+  const now = new Date();
+  const startOf2026 = new Date(2026, 0, 1);
+  const endOf2026 = new Date(2026, 11, 31);
 
   // Total days in 2026
-  const totalDays = 365
+  const totalDays = 365;
 
   // Days passed (if we're in 2026)
-  let daysPassed = 0
+  let daysPassed = 0;
   if (now >= startOf2026 && now <= endOf2026) {
-    daysPassed = Math.floor(
-      (now.getTime() - startOf2026.getTime()) / (1000 * 60 * 60 * 24)
-    ) + 1
+    daysPassed =
+      Math.floor(
+        (now.getTime() - startOf2026.getTime()) / (1000 * 60 * 60 * 24),
+      ) + 1;
   } else if (now > endOf2026) {
-    daysPassed = totalDays
+    daysPassed = totalDays;
   }
 
   // Get today's historical event
-  const todayEvent = getTodayEvent()
+  const todayEvent = getTodayEvent();
 
   // Grid configuration - 15 dots per row, continuous single block
-  const cols = 15
-  const rows = Math.ceil(totalDays / cols)
+  const cols = 15;
+  const rows = Math.ceil(totalDays / cols);
 
   // Calculate dot sizing - smaller dots for more top space
-  const horizontalPadding = width * 0.12 // Side padding
-  const topPadding = height * 0.26 // More space for iOS time + event text
-  const bottomPadding = height * 0.08 // Space for bottom stats
-  const availableWidth = width - horizontalPadding * 2
-  const availableHeight = height - topPadding - bottomPadding
-  
-  const dotSpacing = Math.min(availableWidth / cols, availableHeight / rows)
-  const dotSize = dotSpacing * 0.52 // Smaller dots
+  const horizontalPadding = width * 0.12; // Side padding
+  const topPadding = height * 0.26; // More space for iOS time + event text
+  const bottomPadding = height * 0.08; // Space for bottom stats
+  const availableWidth = width - horizontalPadding * 2;
+  const availableHeight = height - topPadding - bottomPadding;
 
-  const gridWidth = cols * dotSpacing
-  const gridHeight = rows * dotSpacing
+  const dotSpacing = Math.min(availableWidth / cols, availableHeight / rows);
+  const dotSize = dotSpacing * 0.65; // Bigger dots
+
+  const gridWidth = cols * dotSpacing;
+  const gridHeight = rows * dotSpacing;
 
   // Position grid with top padding for iOS clock
-  const startX = (width - gridWidth) / 2 + dotSpacing / 2
-  const startY = topPadding + (availableHeight - gridHeight) / 2
+  const startX = (width - gridWidth) / 2 + dotSpacing / 2;
+  const startY = topPadding + (availableHeight - gridHeight) / 2;
 
-  const daysLeft = totalDays - daysPassed
-  const percentage = Math.round((daysPassed / totalDays) * 100)
-  const fontSize = Math.floor(width * 0.032) // Smaller text
-  const eventFontSize = Math.floor(width * 0.022) // Smaller event text
+  const daysLeft = totalDays - daysPassed;
+  const percentage = Math.round((daysPassed / totalDays) * 100);
+  const fontSize = Math.floor(width * 0.032); // Smaller text
+  const eventFontSize = Math.floor(width * 0.022); // Smaller event text
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: width,
+        height: height,
+        backgroundColor: "#121214",
+        display: "flex",
+        position: "relative",
+      }}
+    >
+      {/* Historical event text at top - one line within grid width */}
       <div
         style={{
-          width: width,
-          height: height,
-          backgroundColor: "#121214",
+          position: "absolute",
+          top: startY - dotSpacing * 1.2,
+          left: startX - dotSpacing / 2,
+          width: gridWidth,
           display: "flex",
-          position: "relative",
+          justifyContent: "center",
+          overflow: "hidden",
         }}
       >
-        {/* Historical event text at top - one line within grid width */}
-        <div
+        <span
           style={{
-            position: "absolute",
-            top: startY - dotSpacing * 1.2,
-            left: startX - dotSpacing / 2,
-            width: gridWidth,
-            display: "flex",
-            justifyContent: "center",
+            color: "#14b8a6",
+            fontSize: eventFontSize,
+            whiteSpace: "nowrap",
             overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
-          <span 
-            style={{ 
-              color: "#52525b", 
-              fontSize: eventFontSize,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {todayEvent}
-          </span>
-        </div>
-
-        {/* Generate all dots */}
-        {Array.from({ length: totalDays }).map((_, i) => {
-          const col = i % cols
-          const row = Math.floor(i / cols)
-          const x = startX + col * dotSpacing
-          const y = startY + row * dotSpacing
-
-          const isToday = i === daysPassed - 1
-          const isPassed = i < daysPassed - 1
-
-          let bgColor = "#3a3a3c" // dark gray for future days
-          if (isToday) {
-            bgColor = "#14b8a6" // teal for today
-          } else if (isPassed) {
-            bgColor = "#ffffff" // white for passed days
-          }
-
-          return (
-            <div
-              key={i}
-              style={{
-                position: "absolute",
-                left: x - dotSize / 2,
-                top: y - dotSize / 2,
-                width: dotSize,
-                height: dotSize,
-                borderRadius: dotSize / 2,
-                backgroundColor: bgColor,
-              }}
-            />
-          )
-        })}
-
-        {/* Bottom stats */}
-        <div
-          style={{
-            position: "absolute",
-            bottom: height * 0.06,
-            left: 0,
-            width: width,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <span style={{ color: "#14b8a6", fontSize: fontSize }}>{daysLeft}d left</span>
-          <span style={{ color: "#6b7280", fontSize: fontSize, marginLeft: 12, marginRight: 12 }}>·</span>
-          <span style={{ color: "#6b7280", fontSize: fontSize }}>{percentage}%</span>
-        </div>
+          {todayEvent}
+        </span>
       </div>
-    ),
+
+      {/* Generate all dots */}
+      {Array.from({ length: totalDays }).map((_, i) => {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const x = startX + col * dotSpacing;
+        const y = startY + row * dotSpacing;
+
+        const isToday = i === daysPassed - 1;
+        const isPassed = i < daysPassed - 1;
+
+        let bgColor = "#3a3a3c"; // dark gray for future days
+        if (isToday) {
+          bgColor = "#14b8a6"; // teal for today
+        } else if (isPassed) {
+          bgColor = "#ffffff"; // white for passed days
+        }
+
+        return (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: x - dotSize / 2,
+              top: y - dotSize / 2,
+              width: dotSize,
+              height: dotSize,
+              borderRadius: dotSize / 2,
+              backgroundColor: bgColor,
+            }}
+          />
+        );
+      })}
+
+      {/* Bottom stats */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: height * 0.06,
+          left: 0,
+          width: width,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <span style={{ color: "#14b8a6", fontSize: fontSize }}>
+          {daysLeft}d left
+        </span>
+        <span
+          style={{
+            color: "#6b7280",
+            fontSize: fontSize,
+            marginLeft: 12,
+            marginRight: 12,
+          }}
+        >
+          ·
+        </span>
+        <span style={{ color: "#6b7280", fontSize: fontSize }}>
+          {percentage}%
+        </span>
+      </div>
+    </div>,
     {
       width,
       height,
-    }
-  )
+    },
+  );
 }
