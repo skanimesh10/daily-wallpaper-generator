@@ -1,4 +1,6 @@
 import { ImageResponse } from "next/og";
+import { parseAccentColor } from "@/lib/accent-color";
+import { WallpaperGrid } from "@/lib/wallpaper-grid";
 
 export const runtime = "edge";
 
@@ -383,6 +385,7 @@ export async function GET(request: Request) {
 
   const width = Number(searchParams.get("width")) || 1179;
   const height = Number(searchParams.get("height")) || 2556;
+  const accentColor = parseAccentColor(searchParams.get("accent"));
 
   // Calculate days passed in 2026
   const now = new Date();
@@ -406,133 +409,20 @@ export async function GET(request: Request) {
   // Get today's historical event
   const todayEvent = getTodayEvent();
 
-  // Grid configuration - 15 dots per row, continuous single block
-  const cols = 15;
-  const rows = Math.ceil(totalDays / cols);
-
-  // Calculate dot sizing - smaller dots for more top space
-  const horizontalPadding = width * 0.12; // Side padding
-  const topPadding = height * 0.26; // More space for iOS time + event text
-  const bottomPadding = height * 0.08; // Space for bottom stats
-  const availableWidth = width - horizontalPadding * 2;
-  const availableHeight = height - topPadding - bottomPadding;
-
-  const dotSpacing = Math.min(availableWidth / cols, availableHeight / rows);
-  const dotSize = dotSpacing * 0.65; // Bigger dots
-
-  const gridWidth = cols * dotSpacing;
-  const gridHeight = rows * dotSpacing;
-
-  // Position grid with top padding for iOS clock
-  const startX = (width - gridWidth) / 2 + dotSpacing / 2;
-  const startY = topPadding + (availableHeight - gridHeight) / 2;
-
   const daysLeft = totalDays - daysPassed;
   const percentage = Math.round((daysPassed / totalDays) * 100);
-  const fontSize = Math.floor(width * 0.032); // Smaller text
-  const eventFontSize = Math.floor(width * 0.022); // Smaller event text
 
   return new ImageResponse(
-    <div
-      style={{
-        width: width,
-        height: height,
-        backgroundColor: "#121214",
-        display: "flex",
-        position: "relative",
-      }}
-    >
-      {/* Historical event text at top - one line within grid width */}
-      <div
-        style={{
-          position: "absolute",
-          top: startY - dotSpacing * 1.2,
-          left: startX - dotSpacing / 2,
-          width: gridWidth,
-          display: "flex",
-          justifyContent: "center",
-          overflow: "hidden",
-        }}
-      >
-        <span
-          style={{
-            color: "#14b8a6",
-            fontSize: eventFontSize,
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {todayEvent}
-        </span>
-      </div>
-
-      {/* Generate all dots */}
-      {Array.from({ length: totalDays }).map((_, i) => {
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const x = startX + col * dotSpacing;
-        const y = startY + row * dotSpacing;
-
-        const isToday = i === daysPassed - 1;
-        const isPassed = i < daysPassed - 1;
-
-        let bgColor = "#3a3a3c"; // dark gray for future days
-        if (isToday) {
-          bgColor = "#14b8a6"; // teal for today
-        } else if (isPassed) {
-          bgColor = "#ffffff"; // white for passed days
-        }
-
-        return (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              left: x - dotSize / 2,
-              top: y - dotSize / 2,
-              width: dotSize,
-              height: dotSize,
-              borderRadius: dotSize / 2,
-              backgroundColor: bgColor,
-            }}
-          />
-        );
-      })}
-
-      {/* Bottom stats */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: height * 0.06,
-          left: 0,
-          width: width,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <span style={{ color: "#14b8a6", fontSize: fontSize }}>
-          {daysLeft}d left
-        </span>
-        <span
-          style={{
-            color: "#6b7280",
-            fontSize: fontSize,
-            marginLeft: 12,
-            marginRight: 12,
-          }}
-        >
-          ·
-        </span>
-        <span style={{ color: "#6b7280", fontSize: fontSize }}>
-          {percentage}%
-        </span>
-      </div>
-    </div>,
-    {
-      width,
-      height,
-    },
+    <WallpaperGrid
+      width={width}
+      height={height}
+      totalDays={totalDays}
+      daysPassed={daysPassed}
+      headerText={todayEvent}
+      daysLeft={daysLeft}
+      percentage={percentage}
+      accentColor={accentColor}
+    />,
+    { width, height },
   );
 }

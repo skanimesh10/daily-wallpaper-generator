@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { parseAccentColor } from "@/lib/accent-color";
 import { parseGoalFromSearchParams } from "@/lib/goal";
 import { WallpaperGrid } from "@/lib/wallpaper-grid";
 
@@ -9,6 +10,7 @@ export async function GET(request: Request) {
 
   const width = Number(searchParams.get("width")) || 1179;
   const height = Number(searchParams.get("height")) || 2556;
+  const accentColor = parseAccentColor(searchParams.get("accent"));
 
   const goal = parseGoalFromSearchParams(searchParams);
 
@@ -26,6 +28,7 @@ export async function GET(request: Request) {
       subtitleText={goal.subtitle}
       daysLeft={goal.daysLeft}
       percentage={goal.percentage}
+      accentColor={accentColor}
     />,
     { width, height },
   );

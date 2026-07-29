@@ -145,6 +145,7 @@ export function buildGoalWallpaperPath(
     days?: number;
     width: number;
     height: number;
+    accent?: string;
   },
 ): string {
   const search = new URLSearchParams({
@@ -156,6 +157,22 @@ export function buildGoalWallpaperPath(
   if (params.start) search.set("start", params.start);
   if (params.end) search.set("end", params.end);
   if (params.days) search.set("days", String(params.days));
+  if (params.accent) search.set("accent", params.accent);
 
   return `/goal?${search.toString()}`;
+}
+
+export function buildCalendarWallpaperPath(params: {
+  width: number;
+  height: number;
+  accent?: string;
+}): string {
+  const search = new URLSearchParams({
+    width: String(params.width),
+    height: String(params.height),
+  });
+
+  if (params.accent) search.set("accent", params.accent);
+
+  return `/days?${search.toString()}`;
 }
