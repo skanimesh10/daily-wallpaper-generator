@@ -7,6 +7,7 @@ type WallpaperGridProps = {
   subtitleText?: string;
   daysLeft: number;
   percentage: number;
+  accentColor: string;
 };
 
 export function WallpaperGrid({
@@ -18,6 +19,7 @@ export function WallpaperGrid({
   subtitleText,
   daysLeft,
   percentage,
+  accentColor,
 }: WallpaperGridProps) {
   const cols = 15;
   const rows = Math.ceil(totalDays / cols);
@@ -65,7 +67,7 @@ export function WallpaperGrid({
       >
         <span
           style={{
-            color: "#14b8a6",
+            color: accentColor,
             fontSize: headerFontSize,
             whiteSpace: "nowrap",
             overflow: "hidden",
@@ -103,7 +105,7 @@ export function WallpaperGrid({
 
         let bgColor = "#3a3a3c";
         if (isToday) {
-          bgColor = "#14b8a6";
+          bgColor = accentColor;
         } else if (isPassed) {
           bgColor = "#ffffff";
         }
@@ -135,7 +137,7 @@ export function WallpaperGrid({
           alignItems: "center",
         }}
       >
-        <span style={{ color: "#14b8a6", fontSize }}>
+        <span style={{ color: accentColor, fontSize }}>
           {daysLeft}d left
         </span>
         <span

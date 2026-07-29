@@ -8,11 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Download, Calendar, Target, ExternalLink } from "lucide-react";
 import {
   addDays,
+  buildCalendarWallpaperPath,
   buildGoalWallpaperPath,
   formatDate,
   parseGoalFromSearchParams,
   startOfDay,
 } from "@/lib/goal";
+import {
+  ACCENT_PRESETS,
+  DEFAULT_ACCENT_ID,
+  accentToQueryValue,
+  hexToRgba,
+  resolveAccentHex,
+} from "@/lib/accent-color";
 
 const DEVICE_PRESETS = [
   { name: "iPhone 15 Pro", w: 1179, h: 2556 },
@@ -55,6 +63,12 @@ export default function WallpaperGenerator() {
   const [goalStart, setGoalStart] = useState("");
   const [goalEnd, setGoalEnd] = useState("");
   const [goalDays, setGoalDays] = useState(60);
+  const [accentId, setAccentId] = useState(DEFAULT_ACCENT_ID);
+  const [customAccent, setCustomAccent] = useState("#14b8a6");
+  const [activeTab, setActiveTab] = useState("calendar");
+
+  const accentHex = resolveAccentHex(accentId, customAccent);
+  const accentQuery = accentToQueryValue(accentId, customAccent);
 
   useEffect(() => {
     setMounted(true);
@@ -63,7 +77,11 @@ export default function WallpaperGenerator() {
     setGoalEnd(formatDate(addDays(startOfDay(new Date()), 59)));
   }, []);
 
-  const calendarUrl = `/days?width=${deviceWidth}&height=${deviceHeight}`;
+  const calendarUrl = buildCalendarWallpaperPath({
+    width: deviceWidth,
+    height: deviceHeight,
+    accent: accentQuery,
+  });
 
   const goalUrl = useMemo(() => {
     if (!goalStart) return "";
@@ -76,6 +94,7 @@ export default function WallpaperGenerator() {
         end: goalEnd,
         width: deviceWidth,
         height: deviceHeight,
+        accent: accentQuery,
       });
     }
 
@@ -85,8 +104,10 @@ export default function WallpaperGenerator() {
       days: goalDays,
       width: deviceWidth,
       height: deviceHeight,
+      accent: accentQuery,
     });
   }, [
+    accentQuery,
     deviceWidth,
     deviceHeight,
     goalDays,
@@ -177,18 +198,44 @@ export default function WallpaperGenerator() {
             </p>
           </div>
 
-          <Tabs defaultValue="calendar" className="gap-8">
+          <AccentColorPicker
+            accentId={accentId}
+            customAccent={customAccent}
+            accentHex={accentHex}
+            onAccentIdChange={setAccentId}
+            onCustomAccentChange={setCustomAccent}
+          />
+
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="gap-8"
+          >
             <TabsList className="mx-auto bg-neutral-900 border border-neutral-800">
               <TabsTrigger
                 value="calendar"
-                className="data-[state=active]:bg-teal-500/10 data-[state=active]:text-teal-400"
+                style={
+                  activeTab === "calendar"
+                    ? {
+                        backgroundColor: hexToRgba(accentHex, 0.1),
+                        color: accentHex,
+                      }
+                    : undefined
+                }
               >
                 <Calendar className="w-4 h-4 mr-2" />
                 Year Calendar
               </TabsTrigger>
               <TabsTrigger
                 value="goal"
-                className="data-[state=active]:bg-teal-500/10 data-[state=active]:text-teal-400"
+                style={
+                  activeTab === "goal"
+                    ? {
+                        backgroundColor: hexToRgba(accentHex, 0.1),
+                        color: accentHex,
+                      }
+                    : undefined
+                }
               >
                 <Target className="w-4 h-4 mr-2" />
                 Goal Wallpaper
@@ -197,17 +244,24 @@ export default function WallpaperGenerator() {
 
             <TabsContent value="calendar" className="space-y-8">
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 text-sm mb-4">
+                <div
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm mb-4"
+                  style={{
+                    backgroundColor: hexToRgba(accentHex, 0.1),
+                    color: accentHex,
+                  }}
+                >
                   <Calendar className="w-4 h-4" />
                   2026 Calendar
                 </div>
                 <p className="text-neutral-400 max-w-md mx-auto">
-                  All 365 days of 2026. Passed days are white, today is teal,
-                  future days are gray.
+                  All 365 days of 2026. Passed days are white, today uses your
+                  accent color, future days are gray.
                 </p>
               </div>
 
               <StatsGrid
+                accentHex={accentHex}
                 items={[
                   { label: "Days Passed", value: calendarStats.daysPassed },
                   {
@@ -230,6 +284,7 @@ export default function WallpaperGenerator() {
                   onHeightChange={setDeviceHeight}
                   wallpaperUrl={calendarUrl}
                   mounted={mounted}
+                  accentHex={accentHex}
                 />
               </div>
 
@@ -239,6 +294,7 @@ export default function WallpaperGenerator() {
                 deviceHeight={deviceHeight}
                 alt="2026 Calendar Wallpaper"
                 footer={`Today is day ${calendarStats.daysPassed} of 2026`}
+                accentHex={accentHex}
                 onDownload={() =>
                   downloadWallpaper(
                     calendarUrl,
@@ -250,7 +306,13 @@ export default function WallpaperGenerator() {
 
             <TabsContent value="goal" className="space-y-8">
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 text-teal-400 text-sm mb-4">
+                <div
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm mb-4"
+                  style={{
+                    backgroundColor: hexToRgba(accentHex, 0.1),
+                    color: accentHex,
+                  }}
+                >
                   <Target className="w-4 h-4" />
                   Goal Countdown
                 </div>
@@ -262,6 +324,7 @@ export default function WallpaperGenerator() {
 
               {goalStats ? (
                 <StatsGrid
+                  accentHex={accentHex}
                   items={[
                     { label: "Days Passed", value: goalStats.daysPassed },
                     { label: "Days Remaining", value: goalStats.daysLeft },
@@ -295,11 +358,16 @@ export default function WallpaperGenerator() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleGoalModeChange("duration")}
-                      className={`border-neutral-700 ${
+                      className="border-neutral-700"
+                      style={
                         goalMode === "duration"
-                          ? "bg-teal-500/10 text-teal-400 border-teal-500/50"
-                          : "text-neutral-400"
-                      }`}
+                          ? {
+                              backgroundColor: hexToRgba(accentHex, 0.1),
+                              color: accentHex,
+                              borderColor: hexToRgba(accentHex, 0.5),
+                            }
+                          : { color: "#a3a3a3" }
+                      }
                     >
                       Duration (e.g. 60 days)
                     </Button>
@@ -308,11 +376,16 @@ export default function WallpaperGenerator() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleGoalModeChange("range")}
-                      className={`border-neutral-700 ${
+                      className="border-neutral-700"
+                      style={
                         goalMode === "range"
-                          ? "bg-teal-500/10 text-teal-400 border-teal-500/50"
-                          : "text-neutral-400"
-                      }`}
+                          ? {
+                              backgroundColor: hexToRgba(accentHex, 0.1),
+                              color: accentHex,
+                              borderColor: hexToRgba(accentHex, 0.5),
+                            }
+                          : { color: "#a3a3a3" }
+                      }
                     >
                       Start & end dates
                     </Button>
@@ -381,6 +454,7 @@ export default function WallpaperGenerator() {
                   wallpaperUrl={goalUrl}
                   mounted={mounted}
                   showPresets
+                  accentHex={accentHex}
                 />
               </div>
 
@@ -395,6 +469,7 @@ export default function WallpaperGenerator() {
                       ? `Day ${goalStats.daysPassed} of ${goalStats.totalDays} · ${goalStats.subtitle}`
                       : undefined
                   }
+                  accentHex={accentHex}
                   onDownload={() =>
                     downloadWallpaper(
                       goalUrl,
@@ -418,10 +493,111 @@ export default function WallpaperGenerator() {
   );
 }
 
+function AccentColorPicker({
+  accentId,
+  customAccent,
+  accentHex,
+  onAccentIdChange,
+  onCustomAccentChange,
+}: {
+  accentId: string;
+  customAccent: string;
+  accentHex: string;
+  onAccentIdChange: (value: string) => void;
+  onCustomAccentChange: (value: string) => void;
+}) {
+  return (
+    <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 mb-8 border border-neutral-800">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <Label className="text-neutral-300 text-sm">Accent color</Label>
+          <p className="text-neutral-500 text-sm mt-1">
+            Applies to both year calendar and goal wallpapers.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-sm font-medium"
+            style={{ color: accentHex }}
+          >
+            {accentId === "custom"
+              ? customAccent.toUpperCase()
+              : ACCENT_PRESETS.find((preset) => preset.id === accentId)?.name}
+          </span>
+          <div
+            className="w-8 h-8 rounded-full border border-neutral-700"
+            style={{ backgroundColor: accentHex }}
+          />
+        </div>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-3">
+        {ACCENT_PRESETS.map((preset) => {
+          const isSelected = accentId === preset.id;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              aria-label={preset.name}
+              title={preset.name}
+              onClick={() => onAccentIdChange(preset.id)}
+              className="w-10 h-10 rounded-full border-2 transition-transform hover:scale-105"
+              style={{
+                backgroundColor: preset.hex,
+                borderColor: isSelected ? "#ffffff" : "transparent",
+                boxShadow: isSelected
+                  ? `0 0 0 2px ${hexToRgba(preset.hex, 0.35)}`
+                  : undefined,
+              }}
+            />
+          );
+        })}
+        <button
+          type="button"
+          aria-label="Custom color"
+          title="Custom color"
+          onClick={() => onAccentIdChange("custom")}
+          className="w-10 h-10 rounded-full border-2 border-dashed border-neutral-600 flex items-center justify-center text-xs text-neutral-400"
+          style={
+            accentId === "custom"
+              ? {
+                  backgroundColor: accentHex,
+                  borderColor: "#ffffff",
+                  color: "#171717",
+                }
+              : undefined
+          }
+        >
+          +
+        </button>
+      </div>
+
+      {accentId === "custom" ? (
+        <div className="mt-5 flex items-center gap-3">
+          <Input
+            type="color"
+            value={customAccent}
+            onChange={(e) => onCustomAccentChange(e.target.value)}
+            className="w-14 h-10 p-1 bg-neutral-800 border-neutral-700 cursor-pointer"
+          />
+          <Input
+            value={customAccent}
+            onChange={(e) => onCustomAccentChange(e.target.value)}
+            placeholder="#14b8a6"
+            className="max-w-[140px] bg-neutral-800 border-neutral-700 text-neutral-100"
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function StatsGrid({
   items,
+  accentHex,
 }: {
   items: { label: string; value: string | number }[];
+  accentHex: string;
 }) {
   return (
     <div className="grid grid-cols-3 gap-4">
@@ -430,7 +606,9 @@ function StatsGrid({
           key={item.label}
           className="bg-neutral-900 rounded-xl p-4 text-center border border-neutral-800"
         >
-          <div className="text-3xl font-bold text-teal-400">{item.value}</div>
+          <div className="text-3xl font-bold" style={{ color: accentHex }}>
+            {item.value}
+          </div>
           <div className="text-neutral-500 text-sm">{item.label}</div>
         </div>
       ))}
@@ -447,6 +625,7 @@ function DimensionConfig({
   wallpaperUrl,
   mounted,
   showPresets = true,
+  accentHex,
 }: {
   idPrefix: string;
   deviceWidth: number;
@@ -456,6 +635,7 @@ function DimensionConfig({
   wallpaperUrl: string;
   mounted: boolean;
   showPresets?: boolean;
+  accentHex: string;
 }) {
   return (
     <div className={showPresets ? "" : "pt-0"}>
@@ -492,24 +672,33 @@ function DimensionConfig({
             Quick Presets
           </Label>
           <div className="flex flex-wrap gap-2">
-            {DEVICE_PRESETS.map((preset) => (
-              <Button
-                key={preset.name}
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  onWidthChange(preset.w);
-                  onHeightChange(preset.h);
-                }}
-                className={`text-xs border-neutral-700 hover:bg-neutral-800 hover:text-teal-400 ${
-                  deviceWidth === preset.w && deviceHeight === preset.h
-                    ? "bg-teal-500/10 text-teal-400 border-teal-500/50"
-                    : "text-neutral-400"
-                }`}
-              >
-                {preset.name}
-              </Button>
-            ))}
+            {DEVICE_PRESETS.map((preset) => {
+              const isSelected =
+                deviceWidth === preset.w && deviceHeight === preset.h;
+              return (
+                <Button
+                  key={preset.name}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    onWidthChange(preset.w);
+                    onHeightChange(preset.h);
+                  }}
+                  className="text-xs border-neutral-700 hover:bg-neutral-800"
+                  style={
+                    isSelected
+                      ? {
+                          backgroundColor: hexToRgba(accentHex, 0.1),
+                          color: accentHex,
+                          borderColor: hexToRgba(accentHex, 0.5),
+                        }
+                      : { color: "#a3a3a3" }
+                  }
+                >
+                  {preset.name}
+                </Button>
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -520,7 +709,10 @@ function DimensionConfig({
             Direct URL
           </Label>
           <div className="flex gap-2">
-            <code className="flex-1 bg-neutral-800 px-4 py-2 rounded-lg text-teal-400 text-sm overflow-x-auto">
+            <code
+              className="flex-1 bg-neutral-800 px-4 py-2 rounded-lg text-sm overflow-x-auto"
+              style={{ color: accentHex }}
+            >
               {mounted && typeof window !== "undefined"
                 ? `${window.location.origin}${wallpaperUrl}`
                 : wallpaperUrl}
@@ -529,7 +721,8 @@ function DimensionConfig({
               variant="outline"
               size="sm"
               onClick={() => window.open(wallpaperUrl, "_blank")}
-              className="border-neutral-700 text-neutral-400 hover:text-teal-400"
+              className="border-neutral-700 text-neutral-400"
+              style={{ color: accentHex }}
             >
               <ExternalLink className="w-4 h-4" />
             </Button>
@@ -547,6 +740,7 @@ function PreviewCard({
   alt,
   footer,
   onDownload,
+  accentHex,
 }: {
   wallpaperUrl: string;
   deviceWidth: number;
@@ -554,6 +748,7 @@ function PreviewCard({
   alt: string;
   footer?: string;
   onDownload: () => void;
+  accentHex: string;
 }) {
   return (
     <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 border border-neutral-800">
@@ -561,7 +756,8 @@ function PreviewCard({
         <h2 className="text-lg font-semibold">Preview</h2>
         <Button
           onClick={onDownload}
-          className="bg-teal-500 hover:bg-teal-600 text-neutral-950"
+          className="text-neutral-950"
+          style={{ backgroundColor: accentHex }}
         >
           <Download className="w-4 h-4 mr-2" />
           Download

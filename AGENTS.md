@@ -33,12 +33,15 @@ Use a tmux session for long-running dev servers so they survive backgrounding.
 | `end` | One of `end` or `days` | End date `YYYY-MM-DD` |
 | `days` | One of `end` or `days` | Duration in days from start |
 | `width`, `height` | No | Image dimensions (default: 1179×2556) |
+| `accent` | No | Accent color preset id (`teal`, `blue`, …) or hex without `#` |
 
 Examples:
 
 ```
 /goal?title=Learn%20Spanish&days=60
 /goal?title=Ship%20MVP&start=2026-08-01&end=2026-12-31
+/goal?title=Run%20Daily&days=60&accent=purple
+/days?width=1179&height=2556&accent=f97316
 ```
 
 ### Lint / test
