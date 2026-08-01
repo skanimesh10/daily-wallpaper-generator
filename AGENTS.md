@@ -53,6 +53,10 @@ Examples:
 
 Prefer **pnpm** (`pnpm-lock.yaml` is present). `npm` also works via `package-lock.json`.
 
+### iPhone auto-update
+
+The homepage includes an **Auto-update on iPhone** guide (Shortcuts Personal Automation): Get Contents of URL → Set Wallpaper, scheduled daily, with Run Immediately on and Notify When Run off. The guide copies the active tab’s Direct URL (`/days` or `/goal`).
+
 ### Gotchas
 
 - `pnpm install` may warn that `sharp` build scripts were ignored; the `/days` PNG route still works without it in this environment.

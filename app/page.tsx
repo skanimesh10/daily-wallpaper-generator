@@ -21,6 +21,7 @@ import {
   hexToRgba,
   resolveAccentHex,
 } from "@/lib/accent-color";
+import { IphoneSetupGuide } from "@/components/iphone-setup-guide";
 
 const DEVICE_PRESETS = [
   { name: "iPhone 15 Pro", w: 1179, h: 2556 },
@@ -126,6 +127,8 @@ export default function WallpaperGenerator() {
   }, [goalUrl]);
 
   const calendarStats = getYearCalendarStats();
+  const activeWallpaperUrl =
+    activeTab === "goal" ? goalUrl : calendarUrl;
 
   const downloadWallpaper = async (url: string, filename: string) => {
     const response = await fetch(url);
@@ -481,10 +484,16 @@ export default function WallpaperGenerator() {
             </TabsContent>
           </Tabs>
 
+          <IphoneSetupGuide
+            wallpaperUrl={activeWallpaperUrl}
+            mounted={mounted}
+            accentHex={accentHex}
+          />
+
           <div className="mt-8 text-center text-neutral-600 text-sm">
             <p>
-              Wallpapers update daily based on the current date. Bookmark the
-              direct URL to keep progress in sync.
+              Wallpapers update daily based on the current date. Use the iPhone
+              guide above or bookmark the direct URL to keep progress in sync.
             </p>
           </div>
         </div>
