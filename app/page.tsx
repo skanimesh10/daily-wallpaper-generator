@@ -22,14 +22,12 @@ import {
   resolveAccentHex,
 } from "@/lib/accent-color";
 import { IphoneSetupGuide } from "@/components/iphone-setup-guide";
-
-const DEVICE_PRESETS = [
-  { name: "iPhone 15 Pro", w: 1179, h: 2556 },
-  { name: "iPhone 15 Pro Max", w: 1290, h: 2796 },
-  { name: "iPhone SE", w: 750, h: 1334 },
-  { name: "Android (1080p)", w: 1080, h: 2400 },
-  { name: "Desktop 4K", w: 3840, h: 2160 },
-] as const;
+import {
+  DEVICE_PRESETS,
+  DEFAULT_DEVICE_PRESET,
+  WALLPAPER_UNSUPPORTED_MESSAGE,
+  isSupportedMobileWallpaperSize,
+} from "@/lib/device-presets";
 
 type GoalMode = "range" | "duration";
 
@@ -55,8 +53,8 @@ function getYearCalendarStats(now = new Date()) {
 }
 
 export default function WallpaperGenerator() {
-  const [deviceWidth, setDeviceWidth] = useState(1179);
-  const [deviceHeight, setDeviceHeight] = useState(2556);
+  const [deviceWidth, setDeviceWidth] = useState(DEFAULT_DEVICE_PRESET.w);
+  const [deviceHeight, setDeviceHeight] = useState(DEFAULT_DEVICE_PRESET.h);
   const [mounted, setMounted] = useState(false);
 
   const [goalTitle, setGoalTitle] = useState("Learn Spanish");
@@ -127,6 +125,10 @@ export default function WallpaperGenerator() {
   }, [goalUrl]);
 
   const calendarStats = getYearCalendarStats();
+  const sizeSupported = isSupportedMobileWallpaperSize(
+    deviceWidth,
+    deviceHeight,
+  );
   const activeWallpaperUrl =
     activeTab === "goal" ? goalUrl : calendarUrl;
 
@@ -285,9 +287,10 @@ export default function WallpaperGenerator() {
                   deviceHeight={deviceHeight}
                   onWidthChange={setDeviceWidth}
                   onHeightChange={setDeviceHeight}
-                  wallpaperUrl={calendarUrl}
+                  wallpaperUrl={sizeSupported ? calendarUrl : ""}
                   mounted={mounted}
                   accentHex={accentHex}
+                  sizeSupported={sizeSupported}
                 />
               </div>
 
@@ -298,6 +301,7 @@ export default function WallpaperGenerator() {
                 alt="2026 Calendar Wallpaper"
                 footer={`Today is day ${calendarStats.daysPassed} of 2026`}
                 accentHex={accentHex}
+                sizeSupported={sizeSupported}
                 onDownload={() =>
                   downloadWallpaper(
                     calendarUrl,
@@ -454,10 +458,11 @@ export default function WallpaperGenerator() {
                   deviceHeight={deviceHeight}
                   onWidthChange={setDeviceWidth}
                   onHeightChange={setDeviceHeight}
-                  wallpaperUrl={goalUrl}
+                  wallpaperUrl={sizeSupported ? goalUrl : ""}
                   mounted={mounted}
                   showPresets
                   accentHex={accentHex}
+                  sizeSupported={sizeSupported}
                 />
               </div>
 
@@ -473,6 +478,7 @@ export default function WallpaperGenerator() {
                       : undefined
                   }
                   accentHex={accentHex}
+                  sizeSupported={sizeSupported}
                   onDownload={() =>
                     downloadWallpaper(
                       goalUrl,
@@ -485,7 +491,7 @@ export default function WallpaperGenerator() {
           </Tabs>
 
           <IphoneSetupGuide
-            wallpaperUrl={activeWallpaperUrl}
+            wallpaperUrl={sizeSupported ? activeWallpaperUrl : ""}
             mounted={mounted}
             accentHex={accentHex}
           />
@@ -635,6 +641,7 @@ function DimensionConfig({
   mounted,
   showPresets = true,
   accentHex,
+  sizeSupported,
 }: {
   idPrefix: string;
   deviceWidth: number;
@@ -645,6 +652,7 @@ function DimensionConfig({
   mounted: boolean;
   showPresets?: boolean;
   accentHex: string;
+  sizeSupported: boolean;
 }) {
   return (
     <div className={showPresets ? "" : "pt-0"}>
@@ -675,12 +683,21 @@ function DimensionConfig({
         </div>
       </div>
 
+      {!sizeSupported ? (
+        <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {WALLPAPER_UNSUPPORTED_MESSAGE}
+        </div>
+      ) : null}
+
       {showPresets ? (
         <div className="mt-6 pt-6 border-t border-neutral-800">
           <Label className="text-neutral-300 text-sm mb-3 block">
-            Quick Presets
+            Quick Presets (phones only)
           </Label>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-neutral-500 text-xs mb-3">
+            iPhone 13 through iPhone 17. Desktop sizes are not supported.
+          </p>
+          <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1">
             {DEVICE_PRESETS.map((preset) => {
               const isSelected =
                 deviceWidth === preset.w && deviceHeight === preset.h;
@@ -712,7 +729,7 @@ function DimensionConfig({
         </div>
       ) : null}
 
-      {wallpaperUrl ? (
+      {wallpaperUrl && sizeSupported ? (
         <div className="mt-6 pt-6 border-t border-neutral-800">
           <Label className="text-neutral-300 text-sm mb-2 block">
             Direct URL
@@ -750,6 +767,7 @@ function PreviewCard({
   footer,
   onDownload,
   accentHex,
+  sizeSupported,
 }: {
   wallpaperUrl: string;
   deviceWidth: number;
@@ -758,6 +776,7 @@ function PreviewCard({
   footer?: string;
   onDownload: () => void;
   accentHex: string;
+  sizeSupported: boolean;
 }) {
   return (
     <div className="bg-neutral-900 rounded-2xl p-6 md:p-8 border border-neutral-800">
@@ -765,7 +784,8 @@ function PreviewCard({
         <h2 className="text-lg font-semibold">Preview</h2>
         <Button
           onClick={onDownload}
-          className="text-neutral-950"
+          disabled={!sizeSupported}
+          className="text-neutral-950 disabled:opacity-40"
           style={{ backgroundColor: accentHex }}
         >
           <Download className="w-4 h-4 mr-2" />
@@ -773,26 +793,40 @@ function PreviewCard({
         </Button>
       </div>
 
-      <div className="flex justify-center">
-        <div
-          className="relative rounded-lg overflow-hidden shadow-2xl border border-neutral-800"
-          style={{
-            maxWidth: "100%",
-            maxHeight: "70vh",
-            aspectRatio: `${deviceWidth}/${deviceHeight}`,
-          }}
-        >
-          <img
-            src={wallpaperUrl}
-            alt={alt}
-            className="w-full h-full object-contain"
-          />
+      {sizeSupported ? (
+        <>
+          <div className="flex justify-center">
+            <div
+              className="relative rounded-lg overflow-hidden shadow-2xl border border-neutral-800"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "70vh",
+                aspectRatio: `${deviceWidth}/${deviceHeight}`,
+              }}
+            >
+              <img
+                src={wallpaperUrl}
+                alt={alt}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
+          {footer ? (
+            <div className="mt-6 text-center text-neutral-500 text-sm">
+              {footer}
+            </div>
+          ) : null}
+        </>
+      ) : (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-10 text-center">
+          <p className="text-red-300 font-medium">
+            This wallpaper can&apos;t be generated
+          </p>
+          <p className="text-red-300/80 text-sm mt-2 max-w-md mx-auto">
+            {WALLPAPER_UNSUPPORTED_MESSAGE}
+          </p>
         </div>
-      </div>
-
-      {footer ? (
-        <div className="mt-6 text-center text-neutral-500 text-sm">{footer}</div>
-      ) : null}
+      )}
     </div>
   );
 }

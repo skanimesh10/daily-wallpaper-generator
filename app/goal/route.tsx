@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { parseAccentColor } from "@/lib/accent-color";
+import { validateMobileWallpaperSize } from "@/lib/device-presets";
 import { parseGoalFromSearchParams } from "@/lib/goal";
 import { WallpaperGrid } from "@/lib/wallpaper-grid";
 
@@ -11,6 +12,11 @@ export async function GET(request: Request) {
   const width = Number(searchParams.get("width")) || 1179;
   const height = Number(searchParams.get("height")) || 2556;
   const accentColor = parseAccentColor(searchParams.get("accent"));
+
+  const sizeCheck = validateMobileWallpaperSize(width, height);
+  if (!sizeCheck.ok) {
+    return new Response(sizeCheck.error, { status: 400 });
+  }
 
   const goal = parseGoalFromSearchParams(searchParams);
 
