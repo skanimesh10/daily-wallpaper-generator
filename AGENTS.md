@@ -53,6 +53,10 @@ Examples:
 
 Prefer **pnpm** (`pnpm-lock.yaml` is present). `npm` also works via `package-lock.json`.
 
+### Mobile-only wallpapers
+
+`/days` and `/goal` only generate portrait phone sizes (roughly 640–1600 × 1136–3200, height > width). Desktop/landscape sizes (e.g. 3840×2160) return **400** with: “This wallpaper can't be generated…”. UI presets cover iPhone 13 → iPhone 17 plus Android 1080p. See `lib/device-presets.ts`.
+
 ### iPhone auto-update
 
 The homepage includes an **Auto-update on iPhone** guide (Shortcuts Personal Automation): Get Contents of URL → Set Wallpaper, scheduled daily, with Run Immediately on and Notify When Run off. The guide copies the active tab’s Direct URL (`/days` or `/goal`).
